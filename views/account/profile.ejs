@@ -1,0 +1,118 @@
+<%- include('../layouts/header') %>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Thông tin cá nhân -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-user me-2"></i>Thông tin cá nhân</h3>
+                </div>
+                <div class="card-body">
+                    <% if (messages.success) { %>
+                        <div class="alert alert-success"><%= messages.success %></div>
+                    <% } %>
+                    <% if (messages.error) { %>
+                        <div class="alert alert-danger"><%= messages.error %></div>
+                    <% } %>
+                    
+                    <form action="/account/update-profile" method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Tên người dùng</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="<%= user.username %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="<%= user.email %>" required>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Đổi mật khẩu -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-key me-2"></i>Đổi mật khẩu</h4>
+                </div>
+                <div class="card-body">
+                    <form action="/account/change-password" method="POST">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
+                            <input type="password" class="form-control" id="currentPassword" 
+                                   name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Mật khẩu mới</label>
+                            <input type="password" class="form-control" id="newPassword" 
+                                   name="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                            <input type="password" class="form-control" id="confirmPassword" 
+                                   name="confirmPassword" required>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Xóa tài khoản -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Vùng nguy hiểm</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Xóa tài khoản</h5>
+                    <p class="text-muted">
+                        Khi xóa tài khoản, tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                    </p>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" 
+                            data-bs-target="#deleteAccountModal">
+                        <i class="fas fa-trash me-2"></i>Xóa tài khoản
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa tài khoản -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Xác nhận xóa tài khoản</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.</p>
+                <form action="/account/delete" method="POST">
+                    <div class="mb-3">
+                        <label for="confirmDelete" class="form-label">
+                            Nhập "DELETE" để xác nhận
+                        </label>
+                        <input type="text" class="form-control" id="confirmDelete" 
+                               name="confirmDelete" required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">Xóa tài khoản</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../layouts/footer') %> 

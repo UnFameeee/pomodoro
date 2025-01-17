@@ -1,0 +1,114 @@
+<%- include('layouts/header') %>
+
+<div class="container">
+    <div class="row">
+        <!-- Tổng quan -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-chart-line me-2"></i>Thống kê tổng quan</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <i class="fas fa-clock stats-icon"></i>
+                                <h4>Tổng thời gian</h4>
+                                <p class="h2"><%= stats.totalHours %> giờ</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <i class="fas fa-check-circle stats-icon"></i>
+                                <h4>Chu kỳ hoàn thành</h4>
+                                <p class="h2"><%= stats.totalCycles %></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <i class="fas fa-calendar-check stats-icon"></i>
+                                <h4>Ngày làm việc</h4>
+                                <p class="h2"><%= stats.totalDays %></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <i class="fas fa-fire stats-icon"></i>
+                                <h4>Chuỗi ngày dài nhất</h4>
+                                <p class="h2"><%= stats.longestStreak %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ thời gian -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Thời gian làm việc</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary btn-sm" data-range="week">Tuần</button>
+                            <button class="btn btn-outline-primary btn-sm" data-range="month">Tháng</button>
+                            <button class="btn btn-outline-primary btn-sm" data-range="year">Năm</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thống kê chi tiết -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Chi tiết</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Trung bình mỗi ngày
+                            <span class="badge bg-primary rounded-pill"><%= stats.avgCyclesPerDay %> chu kỳ</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Thời gian trung bình
+                            <span class="badge bg-primary rounded-pill"><%= stats.avgTimePerDay %> phút/ngày</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Ngày tốt nhất
+                            <span class="badge bg-success rounded-pill"><%= stats.bestDay %></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Chuỗi hiện tại
+                            <span class="badge bg-info rounded-pill"><%= stats.currentStreak %> ngày</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lịch nhiệt -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Lịch nhiệt</h5>
+                </div>
+                <div class="card-body">
+                    <div id="heatmap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script cho thống kê -->
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cal-heatmap@3.6.2/cal-heatmap.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@3.6.2/cal-heatmap.css" />
+<script src="/js/stats.js"></script>
+
+<%- include('layouts/footer') %> 

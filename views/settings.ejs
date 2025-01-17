@@ -1,0 +1,65 @@
+<%- include('layouts/header') %>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-cog me-2"></i>Cài đặt</h3>
+                </div>
+                <div class="card-body">
+                    <form id="settingsForm" action="/settings/save" method="POST">
+                        <div class="mb-4">
+                            <h5><i class="fas fa-clock me-2"></i>Thời gian</h5>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="workTime" class="form-label">Thời gian làm việc (phút)</label>
+                                        <input type="number" class="form-control" id="workTime" name="workTime" 
+                                               value="<%= settings.work_time %>" min="1" max="60">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="shortBreak" class="form-label">Nghỉ ngắn (phút)</label>
+                                        <input type="number" class="form-control" id="shortBreak" name="shortBreak" 
+                                               value="<%= settings.short_break %>" min="1" max="30">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="longBreak" class="form-label">Nghỉ dài (phút)</label>
+                                        <input type="number" class="form-control" id="longBreak" name="longBreak" 
+                                               value="<%= settings.long_break %>" min="1" max="60">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5><i class="fas fa-bell me-2"></i>Thông báo</h5>
+                            <hr>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="notifications" name="notifications">
+                                <label class="form-check-label" for="notifications">Bật thông báo</label>
+                            </div>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="sound" name="sound">
+                                <label class="form-check-label" for="sound">Bật âm thanh</label>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Lưu cài đặt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('layouts/footer') %> 

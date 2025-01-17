@@ -1,0 +1,134 @@
+<%- include('../layouts/header') %>
+
+<div class="container">
+    <div class="row">
+        <!-- Form xuất báo cáo -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-file-export me-2"></i>Xuất báo cáo</h3>
+                </div>
+                <div class="card-body">
+                    <form id="exportForm" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label">Từ ngày</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label">Đến ngày</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate" required>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="btn-group w-100">
+                                <button type="button" class="btn btn-success" onclick="exportReport('excel')">
+                                    <i class="fas fa-file-excel me-2"></i>Excel
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="exportReport('pdf')">
+                                    <i class="fas fa-file-pdf me-2"></i>PDF
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Xem trước báo cáo -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Xem trước báo cáo</h4>
+                </div>
+                <div class="card-body">
+                    <div id="reportPreview">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-calendar fa-3x mb-3"></i>
+                            <p>Chọn khoảng thời gian để xem trước báo cáo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function exportReport(format) {
+    const form = document.getElementById('exportForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    window.location.href = `/reports/${format}?startDate=${startDate}&endDate=${endDate}`;
+}
+
+async function loadPreview() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (!startDate || !endDate) return;
+
+    try {
+        const response = await fetch(`/api/history/detailed?startDate=${startDate}&endDate=${endDate}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            updatePreview(data.data);
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải xem trước:', error);
+    }
+}
+
+function updatePreview(data) {
+    const preview = document.getElementById('reportPreview');
+    
+    // Tạo bảng xem trước
+    const table = document.createElement('table');
+    table.className = 'table table-striped';
+    
+    // Tạo header
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+        <tr>
+            <th>Ngày</th>
+            <th>Chu kỳ hoàn thành</th>
+            <th>Thời gian làm việc</th>
+        </tr>
+    `;
+    
+    // Tạo body
+    const tbody = document.createElement('tbody');
+    data.forEach(row => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${new Date(row.date).toLocaleDateString()}</td>
+                <td>${row.completed_cycles}</td>
+                <td>${formatTime(row.total_work_time)}</td>
+            </tr>
+        `;
+    });
+    
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    
+    preview.innerHTML = '';
+    preview.appendChild(table);
+}
+
+function formatTime(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h${mins}m`;
+}
+
+// Thêm event listeners
+document.getElementById('startDate').addEventListener('change', loadPreview);
+document.getElementById('endDate').addEventListener('change', loadPreview);
+</script>
+
+<%- include('../layouts/footer') %> 

@@ -1,0 +1,29 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>Lịch sử làm việc</h3>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Số chu kỳ hoàn thành</th>
+                            <th>Tổng thời gian làm việc</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% history.forEach(function(record) { %>
+                        <tr>
+                            <td><%= record.date.toLocaleDateString() %></td>
+                            <td><%= record.completed_cycles %> chu kỳ</td>
+                            <td><%= Math.floor(record.total_work_time / 60) %> giờ <%= record.total_work_time % 60 %> phút</td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> 
