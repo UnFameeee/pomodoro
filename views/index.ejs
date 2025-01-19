@@ -2,53 +2,56 @@
 
 <div class="container">
     <div class="timer-container">
-        <div class="mode-indicator">
-            <span class="mode-badge mode-work" id="currentMode">Làm việc</span>
-            <span class="badge bg-secondary">Chu kỳ: <span id="currentCycle">1</span>/4</span>
+        <div class="cycle-steps">
+            <div class="cycle-step" id="stepWork">Work</div>
+            <div class="cycle-step" id="stepBreak">Break</div>
+            <div class="cycle-step long-break" id="longBreakIndicator">
+                <span id="cyclesUntilLongBreak"></span> until Long Break
+            </div>
         </div>
 
-        <div class="progress">
-            <div class="progress-bar bg-primary" role="progressbar" id="timerProgress" style="width: 100%"></div>
-        </div>
-
-        <h2 class="timer-display" id="timer">25:00</h2>
-
+        <h2 class="timer-display" id="timer">00:00</h2>
+        
         <div class="timer-controls">
-            <button class="btn btn-primary timer-btn" id="startBtn">
-                <i class="fas fa-play me-2"></i>Bắt đầu
+            <button class="timer-btn btn-primary" id="startBtn">
+                <i class="fas fa-play"></i>
+                <span>Start</span>
             </button>
-            <button class="btn btn-warning timer-btn" id="pauseBtn" disabled>
-                <i class="fas fa-pause me-2"></i>Tạm dừng
+            <button class="timer-btn btn-warning" id="pauseBtn" disabled>
+                <i class="fas fa-pause"></i>
+                <span>Pause</span>
             </button>
-            <button class="btn btn-danger timer-btn" id="resetBtn">
-                <i class="fas fa-redo me-2"></i>Đặt lại
+            <button class="timer-btn btn-danger" id="resetBtn">
+                <i class="fas fa-redo"></i>
+                <span>Reset</span>
+            </button>
+            <button class="timer-btn btn-secondary" id="skipBtn">
+                <i class="fas fa-forward"></i>
+                <span>Skip</span>
             </button>
         </div>
 
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="stats-card text-center">
-                    <i class="fas fa-clock stats-icon"></i>
-                    <h4>Thời gian hôm nay</h4>
-                    <p class="h2" id="todayTime">0 phút</p>
-                </div>
+        <div class="stats-row">
+            <div class="stats-card">
+                <i class="fas fa-clock stats-icon"></i>
+                <h4>Current Cycle</h4>
+                <p class="h2" id="cycleDisplay">1/4</p>
             </div>
-            <div class="col-md-4">
-                <div class="stats-card text-center">
-                    <i class="fas fa-check-circle stats-icon"></i>
-                    <h4>Chu kỳ hoàn thành</h4>
-                    <p class="h2" id="completedCycles">0</p>
-                </div>
+            <div class="stats-card">
+                <i class="fas fa-check-circle stats-icon"></i>
+                <h4>Completed Cycles</h4>
+                <p class="h2" id="completedCycles">0</p>
             </div>
-            <div class="col-md-4">
-                <div class="stats-card text-center">
-                    <i class="fas fa-fire stats-icon"></i>
-                    <h4>Chuỗi ngày</h4>
-                    <p class="h2" id="streak">0 ngày</p>
-                </div>
+            <div class="stats-card">
+                <i class="fas fa-fire stats-icon"></i>
+                <h4>Daily Streak</h4>
+                <p class="h2" id="streak">0 days</p>
             </div>
         </div>
     </div>
 </div>
+
+<script src="/js/notifications.js"></script>
+<script src="/js/timer.js"></script>
 
 <%- include('layouts/footer') %> 

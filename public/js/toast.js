@@ -63,4 +63,8 @@ toastStyle.textContent = `
     .toast-warning .toast-icon { color: #f1c40f; }
     .toast-info .toast-icon { color: #3498db; }
 `;
-document.head.appendChild(toastStyle); 
+document.head.appendChild(toastStyle);
+
+Toast.show('Settings saved successfully!', 'success');
+Toast.show('Please check your input', 'error');
+Toast.show('Loading...', 'info'); 

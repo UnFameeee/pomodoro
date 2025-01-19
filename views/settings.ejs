@@ -1,65 +1,250 @@
 <%- include('layouts/header') %>
 
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0"><i class="fas fa-cog me-2"></i>Cài đặt</h3>
+    <div class="settings-container">
+        <h2 class="settings-title">Timer Settings</h2>
+        
+        <div class="settings-form">
+            <div class="settings-row">
+                <div class="setting-group">
+                    <label for="workTime">Work Duration (minutes)</label>
+                    <input type="number" 
+                           id="workTime" 
+                           min="1" 
+                           max="60" 
+                           value="25"
+                           class="form-control">
                 </div>
-                <div class="card-body">
-                    <form id="settingsForm" action="/settings/save" method="POST">
-                        <div class="mb-4">
-                            <h5><i class="fas fa-clock me-2"></i>Thời gian</h5>
-                            <hr>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="workTime" class="form-label">Thời gian làm việc (phút)</label>
-                                        <input type="number" class="form-control" id="workTime" name="workTime" 
-                                               value="<%= settings.work_time %>" min="1" max="60">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="shortBreak" class="form-label">Nghỉ ngắn (phút)</label>
-                                        <input type="number" class="form-control" id="shortBreak" name="shortBreak" 
-                                               value="<%= settings.short_break %>" min="1" max="30">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="longBreak" class="form-label">Nghỉ dài (phút)</label>
-                                        <input type="number" class="form-control" id="longBreak" name="longBreak" 
-                                               value="<%= settings.long_break %>" min="1" max="60">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="mb-4">
-                            <h5><i class="fas fa-bell me-2"></i>Thông báo</h5>
-                            <hr>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="notifications" name="notifications">
-                                <label class="form-check-label" for="notifications">Bật thông báo</label>
-                            </div>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" id="sound" name="sound">
-                                <label class="form-check-label" for="sound">Bật âm thanh</label>
-                            </div>
-                        </div>
-
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Lưu cài đặt
-                            </button>
-                        </div>
-                    </form>
+                <div class="setting-group">
+                    <label for="shortBreak">Short Break Duration (minutes)</label>
+                    <input type="number" 
+                           id="shortBreak" 
+                           min="1" 
+                           max="30" 
+                           value="5"
+                           class="form-control">
                 </div>
             </div>
+
+            <div class="settings-row">
+                <div class="setting-group">
+                    <label for="longBreak">Long Break Duration (minutes)</label>
+                    <input type="number" 
+                           id="longBreak" 
+                           min="1" 
+                           max="45" 
+                           value="15"
+                           class="form-control">
+                </div>
+
+                <div class="setting-group">
+                    <label for="totalCycles">Total Cycles</label>
+                    <input type="number" 
+                           id="totalCycles" 
+                           min="1" 
+                           max="12" 
+                           value="4"
+                           class="form-control">
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="setting-group">
+                    <label for="cyclesBeforeLongBreak">Cycles Before Long Break</label>
+                    <input type="number" 
+                           id="cyclesBeforeLongBreak" 
+                           min="1" 
+                           max="100" 
+                           value="4"
+                           class="form-control">
+                </div>
+            </div>
+
+            <!-- Notification toggle -->
+            <div class="toggle-container">
+                <span class="toggle-label">
+                    <i class="fas fa-bell"></i>
+                    Enable Notifications
+                </span>
+                <label class="toggle">
+                    <input type="checkbox" 
+                           id="notifications"
+                           class="toggle-input"
+                           checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <button class="save-btn" id="saveButton">
+                <i class="fas fa-save"></i>
+                <span>Save Settings</span>
+            </button>
         </div>
     </div>
 </div>
+
+<script src="/js/notifications.js"></script>
+<script src="/js/settings-timer.js"></script>
+
+<script>
+// Initialize timer on settings page
+let timer;
+
+// Initialize timer and load saved settings
+document.addEventListener('DOMContentLoaded', () => {
+    timer = new SettingsTimer();
+    
+    // Load saved settings
+    const savedSettings = localStorage.getItem('pomodoroSettings');
+    if (savedSettings) {
+        try {
+            const settings = JSON.parse(savedSettings);
+            document.getElementById('workTime').value = settings.workTime || 25;
+            document.getElementById('shortBreak').value = settings.shortBreak || 5;
+            document.getElementById('longBreak').value = settings.longBreak || 15;
+            document.getElementById('totalCycles').value = settings.totalCycles || 4;
+            document.getElementById('cyclesBeforeLongBreak').value = settings.cyclesBeforeLongBreak || 4;
+            document.getElementById('notifications').checked = settings.notifications !== false;
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+
+    // Add click event listener here
+    const saveButton = document.getElementById('saveButton');   
+
+    saveButton.onclick = function() {
+        const formData = {
+            workTime: parseInt(document.getElementById('workTime').value) || 25,
+            shortBreak: parseInt(document.getElementById('shortBreak').value) || 5,
+            longBreak: parseInt(document.getElementById('longBreak').value) || 15,
+            totalCycles: parseInt(document.getElementById('totalCycles').value) || 4,
+            cyclesBeforeLongBreak: parseInt(document.getElementById('cyclesBeforeLongBreak').value) || 4,
+            notifications: document.getElementById('notifications').checked
+        };
+
+        try {
+            // Validate input
+            if (formData.workTime < 1 || formData.shortBreak < 1 || formData.longBreak < 1 || 
+                formData.totalCycles < 1 || formData.cyclesBeforeLongBreak < 1) {
+                alert('All durations and cycles must be at least 1');
+                return;
+            }
+
+            // Save to localStorage with all settings
+            localStorage.setItem('pomodoroSettings', JSON.stringify(formData));
+            console.log('Settings saved:', formData);
+
+            // Update timer directly
+            if (timer) {
+                timer.updateSettings(formData);
+            }
+
+            // Show success feedback
+            const saveBtn = document.getElementById('saveButton');
+            const originalContent = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+            saveBtn.disabled = true;
+            
+            setTimeout(() => {
+                saveBtn.innerHTML = originalContent;
+                saveBtn.disabled = false;
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            alert('Error saving settings');
+        }
+    };
+});
+</script>
+
+<style>
+.settings-container {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    max-width: 500px;
+    margin: 2rem auto;
+    border: 1px solid rgba(114, 209, 168, 0.1);
+}
+
+.settings-title {
+    color: var(--dark);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.settings-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.setting-group label {
+    color: var(--dark);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 1px solid rgba(114, 209, 168, 0.2);
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(114, 209, 168, 0.2);
+    outline: none;
+}
+
+.save-btn {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 1rem;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    .settings-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+    }
+
+    .settings-title,
+    .setting-group label {
+        color: var(--light);
+    }
+
+    .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(114, 209, 168, 0.2);
+        color: var(--light);
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.15);
+    }
+}
+</style>
 
 <%- include('layouts/footer') %> 

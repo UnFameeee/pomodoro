@@ -1,49 +1,122 @@
 class PomodoroTimer {
     constructor() {
-        // Các element DOM
-        this.timerDisplay = document.getElementById('timer');
-        this.startBtn = document.getElementById('startBtn');
-        this.pauseBtn = document.getElementById('pauseBtn');
-        this.resetBtn = document.getElementById('resetBtn');
-        this.currentCycle = document.getElementById('currentCycle');
-        this.currentMode = document.getElementById('currentMode');
-
-        // Các biến trạng thái
-        this.timeLeft = 25 * 60; // 25 phút mặc định
+        // Khởi tạo các biến mặc định
         this.isRunning = false;
         this.timerId = null;
         this.cycleCount = 1;
-        this.mode = 'work'; // 'work', 'shortBreak', 'longBreak'
+        this.mode = 'work';
 
-        // Cài đặt thời gian (sẽ được cập nhật từ settings)
-        this.settings = {
-            workTime: 25,
-            shortBreak: 5,
-            longBreak: 15
-        };
+        // Load settings trước khi khởi tạo bất kỳ thứ gì khác
+        this.loadSettings();
+
+        // Sau đó mới khởi tạo DOM elements
+        this.initializeDOM();
 
         // Khởi tạo notification service
         this.notificationService = new NotificationService();
         
-        // Kiểm tra và yêu cầu quyền thông báo
-        this.initializeNotifications();
-
         // Khởi tạo sự kiện
         this.initializeEvents();
         
         // Khôi phục trạng thái từ localStorage nếu có
         this.restoreState();
 
-        // Lắng nghe sự thay đổi cài đặt thông báo
-        window.addEventListener('notificationSettingChanged', (event) => {
-            this.notificationService.toggleNotifications(event.detail.enabled);
-        });
+        // Set initial value for long break indicator
+        const initialCyclesUntilLongBreak = this.settings.cyclesBeforeLongBreak - (this.cycleCount % this.settings.cyclesBeforeLongBreak);
+        this.cyclesUntilLongBreak.textContent = initialCyclesUntilLongBreak;
+
+        // Cập nhật display
+        this.updateDisplay();
+    }
+
+    initializeDOM() {
+        this.timerDisplay = document.getElementById('timer');
+        this.startBtn = document.getElementById('startBtn');
+        this.pauseBtn = document.getElementById('pauseBtn');
+        this.resetBtn = document.getElementById('resetBtn');
+        this.skipBtn = document.getElementById('skipBtn');
+        this.cycleDisplay = document.getElementById('cycleDisplay');
+        this.stepWork = document.getElementById('stepWork');
+        this.stepBreak = document.getElementById('stepBreak');
+        this.cyclesUntilLongBreak = document.getElementById('cyclesUntilLongBreak');
+        this.longBreakIndicator = document.getElementById('longBreakIndicator');
+    }
+
+    loadSettings() {
+        const savedSettings = localStorage.getItem('pomodoroSettings');
+        console.log('Loading saved settings:', savedSettings);
+
+        if (savedSettings) {
+            try {
+                const settings = JSON.parse(savedSettings);
+                this.settings = {
+                    workTime: parseInt(settings.workTime) || 25,
+                    shortBreak: parseInt(settings.shortBreak) || 5,
+                    longBreak: parseInt(settings.longBreak) || 15,
+                    totalCycles: parseInt(settings.totalCycles) || 4,
+                    cyclesBeforeLongBreak: parseInt(settings.cyclesBeforeLongBreak) || 4
+                };
+                console.log('Parsed settings:', this.settings);
+
+                // Reset cycleCount if it's greater than totalCycles
+                if (this.cycleCount > this.settings.totalCycles) {
+                    this.cycleCount = 1;
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                this.setDefaultSettings();
+            }
+        } else {
+            console.log('No saved settings found, using defaults');
+            this.setDefaultSettings();
+        }
+
+        // Set initial time based on mode
+        this.setTimeForCurrentMode();
+    }
+
+    setDefaultSettings() {
+        this.settings = {
+            workTime: 25,
+            shortBreak: 5,
+            longBreak: 15,
+            totalCycles: 4,
+            cyclesBeforeLongBreak: 4
+        };
+    }
+
+    updateSettings(newSettings) {
+        this.settings = {
+            workTime: parseInt(newSettings.workTime) || 25,
+            shortBreak: parseInt(newSettings.shortBreak) || 5,
+            longBreak: parseInt(newSettings.longBreak) || 15,
+            totalCycles: parseInt(newSettings.totalCycles) || 4,
+            cyclesBeforeLongBreak: parseInt(newSettings.cyclesBeforeLongBreak) || 4
+        };
+        
+        // Save all settings to localStorage
+        localStorage.setItem('pomodoroSettings', JSON.stringify({
+            ...this.settings,
+            notifications: newSettings.notifications
+        }));
+        
+        // Update notification settings
+        this.notificationService.toggleNotifications(newSettings.notifications);
+        
+        // Reset cycleCount if it's greater than new totalCycles
+        if (this.cycleCount > this.settings.totalCycles) {
+            this.cycleCount = 1;
+        }
+        
+        // Reset timer with new settings
+        this.reset();
     }
 
     initializeEvents() {
         this.startBtn.addEventListener('click', () => this.start());
         this.pauseBtn.addEventListener('click', () => this.pause());
         this.resetBtn.addEventListener('click', () => this.reset());
+        this.skipBtn.addEventListener('click', () => this.skipStep());
 
         // Lưu trạng thái khi người dùng rời trang
         window.addEventListener('beforeunload', () => this.saveState());
@@ -52,7 +125,7 @@ class PomodoroTimer {
     async initializeNotifications() {
         const hasPermission = await NotificationService.checkPermission();
         if (!hasPermission) {
-            console.log('Vui lòng cho phép thông báo để nhận được nhắc nhở');
+            console.log('Please enable notifications for timer alerts');
         }
     }
 
@@ -91,15 +164,14 @@ class PomodoroTimer {
     completeTimer() {
         this.pause();
         
-        // Gửi thông báo phù hợp với mode hiện tại
         if (this.mode === 'work') {
-            this.notificationService.sendWorkSessionEnd();
-        } else {
-            this.notificationService.sendBreakSessionEnd();
-        }
-
-        if (this.mode === 'work') {
-            if (this.cycleCount % 4 === 0) {
+            this.notificationService.sendBrowserNotification(
+                'Break Time!',
+                'Time to take a break. Good job!'
+            );
+            
+            // After work, check if it's time for long break
+            if (this.cycleCount % this.settings.cyclesBeforeLongBreak === 0) {
                 this.mode = 'longBreak';
                 this.timeLeft = this.settings.longBreak * 60;
             } else {
@@ -107,10 +179,15 @@ class PomodoroTimer {
                 this.timeLeft = this.settings.shortBreak * 60;
             }
         } else {
+            this.notificationService.sendBrowserNotification(
+                'Work Time!',
+                'Break is over. Let\'s get back to work!'
+            );
+            
             this.mode = 'work';
             this.timeLeft = this.settings.workTime * 60;
-            if (this.mode === 'longBreak' || this.mode === 'shortBreak') {
-                this.cycleCount++;
+            if (this.mode === 'work') {
+                this.cycleCount = Math.min(this.cycleCount + 1, this.settings.totalCycles);
             }
         }
 
@@ -119,6 +196,9 @@ class PomodoroTimer {
     }
 
     setTimeForCurrentMode() {
+        console.log('Setting time for mode:', this.mode); // Debug log
+        console.log('Current settings:', this.settings); // Debug log
+
         switch (this.mode) {
             case 'work':
                 this.timeLeft = this.settings.workTime * 60;
@@ -130,24 +210,46 @@ class PomodoroTimer {
                 this.timeLeft = this.settings.longBreak * 60;
                 break;
         }
+        console.log('Set timeLeft to:', this.timeLeft); // Debug log
     }
 
     updateDisplay() {
         const minutes = Math.floor(this.timeLeft / 60);
         const seconds = this.timeLeft % 60;
         this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        this.currentCycle.textContent = this.cycleCount;
-        this.currentMode.textContent = this.getModeText();
+        this.cycleDisplay.textContent = `${this.cycleCount}/${this.settings.totalCycles}`;
+
+        // Update cycle steps
+        this.stepWork.classList.remove('active');
+        this.stepBreak.classList.remove('active', 'break');
+
+        if (this.mode === 'work') {
+            this.stepWork.classList.add('active');
+        } else {
+            this.stepBreak.classList.add('active', 'break');
+        }
+
+        // Update cycles until long break
+        const cyclesRemaining = this.settings.cyclesBeforeLongBreak - (this.cycleCount % this.settings.cyclesBeforeLongBreak);
+        this.cyclesUntilLongBreak.textContent = cyclesRemaining;
+        
+        if (cyclesRemaining === 0) {
+            this.longBreakIndicator.textContent = "Long Break next!";
+            this.longBreakIndicator.style.color = '#6c63ff';
+        } else {
+            this.longBreakIndicator.textContent = `${cyclesRemaining} until Long Break`;
+            this.longBreakIndicator.style.color = '';
+        }
     }
 
     getModeText() {
         switch (this.mode) {
             case 'work':
-                return 'Làm việc';
+                return 'Work';
             case 'shortBreak':
-                return 'Nghỉ ngắn';
+                return 'Short Break';
             case 'longBreak':
-                return 'Nghỉ dài';
+                return 'Long Break';
             default:
                 return '';
         }
@@ -158,8 +260,7 @@ class PomodoroTimer {
             timeLeft: this.timeLeft,
             isRunning: this.isRunning,
             cycleCount: this.cycleCount,
-            mode: this.mode,
-            settings: this.settings
+            mode: this.mode
         };
         localStorage.setItem('pomodoroState', JSON.stringify(state));
     }
@@ -168,11 +269,22 @@ class PomodoroTimer {
         const savedState = localStorage.getItem('pomodoroState');
         if (savedState) {
             const state = JSON.parse(savedState);
-            this.timeLeft = state.timeLeft;
-            this.cycleCount = state.cycleCount;
             this.mode = state.mode;
-            this.settings = state.settings;
+            
+            // Ensure cycleCount doesn't exceed totalCycles from settings
+            this.cycleCount = Math.min(state.cycleCount, this.settings.totalCycles);
+            
+            // Load time from state or set based on mode
+            if (state.timeLeft) {
+                this.timeLeft = state.timeLeft;
+            } else {
+                this.setTimeForCurrentMode();
+            }
+            
             this.updateDisplay();
+        } else {
+            // If no state, set time based on current mode
+            this.setTimeForCurrentMode();
         }
     }
 
@@ -199,18 +311,19 @@ class PomodoroTimer {
         }
     }
 
-    updateSettings(newSettings) {
-        this.settings = { ...this.settings, ...newSettings };
-        this.reset();
+    skipStep() {
+        this.completeTimer();
     }
 }
 
 // Khởi tạo timer khi trang được tải
 document.addEventListener('DOMContentLoaded', () => {
-    const timer = new PomodoroTimer();
+    window.pomodoroTimer = new PomodoroTimer();
     
-    // Lắng nghe sự kiện cập nhật cài đặt từ form settings
-    window.addEventListener('settingsUpdated', (event) => {
-        timer.updateSettings(event.detail);
-    });
+    // Request notification permission
+    if ('Notification' in window) {
+        Notification.requestPermission();
+    }
+    
+    console.log('Timer initialized with settings:', window.pomodoroTimer.settings);
 }); 

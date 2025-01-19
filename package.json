@@ -1,7 +1,7 @@
 {
   "name": "pomodoro-app",
   "version": "1.0.0",
-  "description": "Ứng dụng Pomodoro Timer",
+  "description": "Pomodoro Timer Application",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -10,23 +10,20 @@
   "dependencies": {
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
-    "compression": "^1.7.4",
-    "cookie-parser": "^1.4.7",
+    "compression": "^1.7.5",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
+    "dotenv": "^10.0.0",
     "ejs": "^3.1.6",
-    "exceljs": "^4.3.0",
     "express": "^4.17.1",
-    "express-mongo-sanitize": "^2.1.0",
-    "express-rate-limit": "^5.5.0",
+    "express-rate-limit": "^7.5.0",
     "express-session": "^1.17.2",
-    "helmet": "^4.6.0",
+    "helmet": "^8.0.0",
     "mysql2": "^2.3.0",
-    "node-notifier": "^10.0.1",
-    "pdfkit-table": "^0.1.99",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0",
-    "xss-clean": "^0.1.1"
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"

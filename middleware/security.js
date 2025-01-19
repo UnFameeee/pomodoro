@@ -1,7 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const csrf = require('csurf');
-const sanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 
 // Rate limiting
@@ -23,15 +22,31 @@ const helmetConfig = {
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],
-            styleSrc: ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net', 'cdnjs.cloudflare.com'],
-            imgSrc: ["'self'", 'data:', 'blob:'],
-            fontSrc: ["'self'", 'cdn.jsdelivr.net', 'cdnjs.cloudflare.com'],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "'unsafe-eval'",
+                "https://cdn.jsdelivr.net",
+                "https://cdnjs.cloudflare.com"
+            ],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdn.jsdelivr.net",
+                "https://cdnjs.cloudflare.com",
+                "https://fonts.googleapis.com"
+            ],
+            fontSrc: [
+                "'self'",
+                "https://fonts.gstatic.com",
+                "https://cdnjs.cloudflare.com"
+            ],
+            imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'"],
-            frameSrc: ["'none'"],
             objectSrc: ["'none'"],
-            upgradeInsecureRequests: []
-        }
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+        },
     },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -89,7 +104,6 @@ module.exports = {
     checkInactivity,
     securityMiddleware: [
         helmet(helmetConfig),
-        sanitize(),
         xss(),
         csrf({ 
             cookie: {
