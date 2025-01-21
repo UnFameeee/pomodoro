@@ -1,55 +1,72 @@
 class SettingsTimer {
     constructor() {
-        // Khởi tạo notification service
-        this.notificationService = new NotificationService();
-        
-        // Load settings
-        this.loadSettings();
+        this.initializeSettingsPage();
     }
 
-    loadSettings() {
+    initializeSettingsPage() {
+        // Load saved settings
         const savedSettings = localStorage.getItem('pomodoroSettings');
         if (savedSettings) {
             try {
                 const settings = JSON.parse(savedSettings);
-                this.settings = {
-                    workTime: parseInt(settings.workTime) || 25,
-                    shortBreak: parseInt(settings.shortBreak) || 5,
-                    longBreak: parseInt(settings.longBreak) || 15
-                };
-                
-                if (this.notificationService) {
-                    this.notificationService.toggleNotifications(settings.notifications);
-                }
+                console.log(settings.totalCycles);
+                document.getElementById('workTime').value = settings.workTime || 25;
+                document.getElementById('shortBreak').value = settings.shortBreak || 5;
+                document.getElementById('longBreak').value = settings.longBreak || 15;
+                document.getElementById('totalCycles').value = settings.totalCycles || 4;
+                document.getElementById('cyclesBeforeLongBreak').value = settings.cyclesBeforeLongBreak || 4;
+                document.getElementById('notifications').checked = settings.notifications !== false;
             } catch (error) {
-                console.error('Error parsing settings:', error);
-                this.setDefaultSettings();
+                console.error('Error loading settings:', error);
             }
-        } else {
-            this.setDefaultSettings();
+        }
+
+        // Add click event listener for save button
+        const saveButton = document.getElementById('saveButton');   
+        saveButton.onclick = this.handleSaveSettings.bind(this);
+    }
+
+    handleSaveSettings() {
+        const formData = {
+            workTime: parseInt(document.getElementById('workTime').value) || 25,
+            shortBreak: parseInt(document.getElementById('shortBreak').value) || 5,
+            longBreak: parseInt(document.getElementById('longBreak').value) || 15,
+            totalCycles: parseInt(document.getElementById('totalCycles').value) || 4,
+            cyclesBeforeLongBreak: parseInt(document.getElementById('cyclesBeforeLongBreak').value) || 4,
+            notifications: document.getElementById('notifications').checked
+        };
+        
+        try {
+            // Validate input
+            if (formData.workTime < 1 || formData.shortBreak < 1 || formData.longBreak < 1 || 
+                formData.totalCycles < 1 || formData.cyclesBeforeLongBreak < 1) {
+                alert('All durations and cycles must be at least 1');
+                return;
+            }
+
+            // Save to localStorage with all settings
+            localStorage.setItem('pomodoroSettings', JSON.stringify(formData));
+
+
+            // Show success feedback
+            const saveBtn = document.getElementById('saveButton');
+            const originalContent = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+            saveBtn.disabled = true;
+            
+            setTimeout(() => {
+                saveBtn.innerHTML = originalContent;
+                saveBtn.disabled = false;
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            alert('Error saving settings');
         }
     }
+}
 
-    setDefaultSettings() {
-        this.settings = {
-            workTime: 25,
-            shortBreak: 5,
-            longBreak: 15
-        };
-    }
-
-    updateSettings(newSettings) {
-        this.settings = {
-            workTime: parseInt(newSettings.workTime) || 25,
-            shortBreak: parseInt(newSettings.shortBreak) || 5,
-            longBreak: parseInt(newSettings.longBreak) || 15
-        };
-        
-        localStorage.setItem('pomodoroSettings', JSON.stringify({
-            ...this.settings,
-            notifications: newSettings.notifications
-        }));
-        
-        this.notificationService.toggleNotifications(newSettings.notifications);
-    }
-} 
+// Initialize timer when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.timer = new SettingsTimer();
+}); 

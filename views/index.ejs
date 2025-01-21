@@ -13,13 +13,9 @@
         <h2 class="timer-display" id="timer">00:00</h2>
         
         <div class="timer-controls">
-            <button class="timer-btn btn-primary" id="startBtn">
+            <button class="timer-btn btn-primary" id="startPauseBtn">
                 <i class="fas fa-play"></i>
                 <span>Start</span>
-            </button>
-            <button class="timer-btn btn-warning" id="pauseBtn" disabled>
-                <i class="fas fa-pause"></i>
-                <span>Pause</span>
             </button>
             <button class="timer-btn btn-danger" id="resetBtn">
                 <i class="fas fa-redo"></i>
@@ -42,15 +38,16 @@
                 <h4>Completed Cycles</h4>
                 <p class="h2" id="completedCycles">0</p>
             </div>
-            <div class="stats-card">
+            <!-- <div class="stats-card">
                 <i class="fas fa-fire stats-icon"></i>
                 <h4>Daily Streak</h4>
                 <p class="h2" id="streak">0 days</p>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>
 
+<script src="/js/toast.js"></script>
 <script src="/js/notifications.js"></script>
 <script src="/js/timer.js"></script>
 
