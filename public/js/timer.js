@@ -57,7 +57,8 @@ class PomodoroTimer {
                     shortBreak: parseInt(settings.shortBreak) || 5,
                     longBreak: parseInt(settings.longBreak) || 15,
                     totalCycles: parseInt(settings.totalCycles) || 4,
-                    cyclesBeforeLongBreak: parseInt(settings.cyclesBeforeLongBreak) || 4
+                    cyclesBeforeLongBreak: parseInt(settings.cyclesBeforeLongBreak) || 4,
+                    notifications: settings.notifications
                 };
                 console.log('Parsed settings:', this.settings);
 
@@ -186,10 +187,10 @@ class PomodoroTimer {
             // After work, check if it's time for long break
             if (this.cycleCount % this.settings.cyclesBeforeLongBreak == 0) {
                 this.mode = 'longBreak';
-                this.timeLeft = this.settings.longBreak * 60;
+                this.timeLeft = parseInt(this.settings.longBreak) * 60;
             } else {
                 this.mode = 'shortBreak';
-                this.timeLeft = this.settings.shortBreak * 60;
+                this.timeLeft = parseInt(this.settings.shortBreak) * 60;
             }
         } else {
             // Check if this was the last break of the last cycle
@@ -205,7 +206,7 @@ class PomodoroTimer {
                 // Reset everything for a new set of cycles
                 this.cycleCount = 1;
                 this.mode = 'work';
-                this.timeLeft = this.settings.workTime * 60;
+                this.timeLeft = parseInt(this.settings.workTime) * 60;
             } else {
                 this.notificationService.sendBrowserNotification(
                     'Work Time!',
@@ -213,7 +214,7 @@ class PomodoroTimer {
                 );
 
                 this.mode = 'work';
-                this.timeLeft = this.settings.workTime * 60;
+                this.timeLeft = parseInt(this.settings.workTime) * 60;
 
                 // Increment completed cycles when starting a new work session
                 if (this.cycleCount < this.settings.totalCycles) {
@@ -235,13 +236,13 @@ class PomodoroTimer {
 
         switch (this.mode) {
             case 'work':
-                this.timeLeft = this.settings.workTime * 60;
+                this.timeLeft = parseInt(this.settings.workTime) * 60;
                 break;
             case 'shortBreak':
-                this.timeLeft = this.settings.shortBreak * 60;
+                this.timeLeft = parseInt(this.settings.shortBreak) * 60;
                 break;
             case 'longBreak':
-                this.timeLeft = this.settings.longBreak * 60;
+                this.timeLeft = parseInt(this.settings.longBreak) * 60;
                 break;
         }
         console.log('Set timeLeft to:', this.timeLeft); // Debug log
@@ -334,7 +335,7 @@ class PomodoroTimer {
 
             // Load time from state or set based on mode
             if (state.timeLeft) {
-                this.timeLeft = state.timeLeft;
+                this.timeLeft = parseInt(state.timeLeft);
             } else {
                 this.setTimeForCurrentMode();
             }
