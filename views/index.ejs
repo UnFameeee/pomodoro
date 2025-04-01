@@ -44,11 +44,65 @@
                 <p class="h2" id="streak">0 days</p>
             </div> -->
         </div>
+        
+        <div class="settings-info">
+            <!-- <details>
+                <summary>Current Settings</summary>
+                <div id="settingsDebug">Loading settings...</div>
+            </details> -->
+            <div class="tip">
+                <small><i class="fas fa-info-circle"></i> Settings are automatically applied. Double-click the timer to manually refresh.</small>
+            </div>
+        </div>
     </div>
 </div>
 
 <script src="/js/toast.js"></script>
 <script src="/js/notifications.js"></script>
 <script src="/js/timer.js"></script>
+
+<style>
+.settings-info {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.settings-info .tip {
+    margin-top: 0.5rem;
+    text-align: center;
+    font-style: italic;
+}
+
+.settings-info summary {
+    cursor: pointer;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.settings-info details {
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+#settingsDebug {
+    margin-top: 0.5rem;
+    background: rgba(0,0,0,0.05);
+    padding: 0.75rem;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+    .settings-info {
+        color: #aaa;
+    }
+    
+    #settingsDebug {
+        background: rgba(255,255,255,0.1);
+    }
+}
+</style>
 
 <%- include('layouts/footer') %> 
