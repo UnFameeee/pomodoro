@@ -6,6 +6,8 @@ class PomodoroTimer {
         this.cycleCount = 1;
         this.mode = 'work';
         this.timeLeft = 0; // Initialize timeLeft to 0 to force update
+        this.startTime = 0;
+        this.initialTimeLeft = 0;
 
         console.log('Initializing Pomodoro Timer');
 
@@ -18,10 +20,15 @@ class PomodoroTimer {
         // Khởi tạo notification service
         this.notificationService = new NotificationService();
 
-        // Khôi phục trạng thái từ localStorage nếu có
+        console.log('Checking if state exists before restoring:', localStorage.getItem('pomodoroState'));
+        
+        // IMPORTANT: Restore state after all initialization
         this.restoreState();
 
-        // Nếu không có trạng thái được khôi phục, hãy thiết lập thời gian cho chế độ hiện tại
+        console.log('After restore - timeLeft:', this.timeLeft, 'mode:', this.mode);
+
+        // Don't call forceResetTimer here as it would override the saved state
+        // Instead, only set time if state wasn't restored
         if (this.timeLeft <= 0) {
             this.setTimeForCurrentMode();
             console.log('Setting initial time for mode:', this.mode, 'to', this.timeLeft);
@@ -29,9 +36,6 @@ class PomodoroTimer {
 
         // Khởi tạo sự kiện
         this.initializeEvents();
-
-        // Đảm bảo sử dụng settings mới nhất từ localStorage
-        this.forceResetTimer();
 
         // Set initial value for long break indicator
         const initialCyclesUntilLongBreak = this.settings.cyclesBeforeLongBreak - (this.cycleCount % this.settings.cyclesBeforeLongBreak);
@@ -42,6 +46,11 @@ class PomodoroTimer {
         // Cập nhật display
         this.updateDisplay();
 
+        // Auto-save state every 1 second to ensure we're always up to date
+        this.autoSaveInterval = setInterval(() => {
+            this.saveState();
+        }, 1000);
+
         this.completedCyclesDisplay = document.getElementById('completedCycles');
         this.loadCompletedCycles(); // Load completed cycles from storage
         
@@ -49,6 +58,9 @@ class PomodoroTimer {
         this.updateSettingsDebug();
         
         console.log('Timer fully initialized with mode:', this.mode, 'and timeLeft:', this.timeLeft);
+        
+        // Save state at the end of initialization
+        this.saveState();
     }
 
     initializeDOM() {
@@ -64,6 +76,7 @@ class PomodoroTimer {
         this.cyclesUntilLongBreak = document.getElementById('cyclesUntilLongBreak');
         this.longBreakIndicator = document.getElementById('longBreakIndicator');
         this.settingsDebug = document.getElementById('settingsDebug');
+        this.stateDebug = document.getElementById('stateDebug');
         
         // Thêm sự kiện double-click vào timer display để buộc làm mới timer với settings mới
         if (this.timerDisplay) {
@@ -212,6 +225,15 @@ class PomodoroTimer {
                     Toast.show('Timer updated with new settings', 'info');
                 }
             }
+            
+            // Also listen for state changes
+            if (event.key === 'pomodoroState') {
+                console.log('Timer state changed in another tab/window, syncing...');
+                this.restoreState();
+                if (typeof Toast !== 'undefined') {
+                    Toast.show('Timer synced with other tab', 'info');
+                }
+            }
         });
     }
 
@@ -242,12 +264,20 @@ class PomodoroTimer {
             this.startTime = Date.now();
             this.initialTimeLeft = this.timeLeft;
 
+            // Save state immediately when starting
+            this.saveState();
+
             this.timerId = setInterval(() => {
                 // Calculate elapsed time in seconds since timer started
                 const elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
                 // Calculate new timeLeft based on initial value and elapsed time
                 this.timeLeft = this.initialTimeLeft - elapsedSeconds;
                 this.updateDisplay();
+
+                // Save state every 1 second to ensure we have the most recent time
+                if (elapsedSeconds % 1 === 0) {
+                    this.saveState();
+                }
 
                 if (this.timeLeft <= 0) {
                     this.completeTimer();
@@ -266,6 +296,9 @@ class PomodoroTimer {
             clearInterval(this.timerId);
             // Store the actual timeLeft when paused
             this.initialTimeLeft = this.timeLeft;
+            
+            // Save state when pausing
+            this.saveState();
         }
     }
 
@@ -274,6 +307,9 @@ class PomodoroTimer {
         this.setTimeForCurrentMode();
         this.updateDisplay();
         this.skipBtn.disabled = true;
+        
+        // Save state after reset
+        this.saveState();
     }
 
     // Reset the entire timer process to the beginning (cycle 1, work mode)
@@ -284,6 +320,9 @@ class PomodoroTimer {
         this.setTimeForCurrentMode();
         this.updateDisplay();
         this.skipBtn.disabled = true;
+        
+        // Save state after full reset
+        this.saveState();
         
         if (typeof Toast !== 'undefined') {
             Toast.show('Timer reset to beginning', 'info');
@@ -345,6 +384,9 @@ class PomodoroTimer {
 
         this.updateDisplay();
         this.saveCompletedCycle();
+        
+        // Save state after moving to next step
+        this.saveState();
     }
 
     setTimeForCurrentMode() {
@@ -405,6 +447,8 @@ class PomodoroTimer {
         const minutes = Math.floor(this.timeLeft / 60);
         const seconds = this.timeLeft % 60;
         this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        console.log(`Display updated to: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} (${this.timeLeft} seconds)`);
 
         this.cycleDisplay.textContent = `${this.cycleCount}/${this.settings.totalCycles}`;
 
@@ -471,13 +515,24 @@ class PomodoroTimer {
     }
 
     saveState() {
+        // Make sure we save the exact displayed time value
+        const timeString = this.timerDisplay ? this.timerDisplay.textContent : null;
+        
         const state = {
             timeLeft: this.timeLeft,
             isRunning: this.isRunning,
             cycleCount: this.cycleCount,
-            mode: this.mode
+            mode: this.mode,
+            startTime: this.startTime,
+            initialTimeLeft: this.initialTimeLeft,
+            lastSaved: Date.now(),
+            displayMinutes: Math.floor(this.timeLeft / 60),
+            displaySeconds: this.timeLeft % 60,
+            timeString: timeString
         };
         localStorage.setItem('pomodoroState', JSON.stringify(state));
+        console.log('Timer state saved with display time:', timeString || 
+            `${state.displayMinutes.toString().padStart(2, '0')}:${state.displaySeconds.toString().padStart(2, '0')}`);
     }
 
     clearSettings() {
@@ -537,6 +592,9 @@ class PomodoroTimer {
         // Update display
         this.updateDisplay();
         
+        // Save state after reset
+        this.saveState();
+        
         console.log('Timer force reset complete. Mode:', this.mode, 'Time:', this.timeLeft);
         
         return true;
@@ -544,38 +602,75 @@ class PomodoroTimer {
 
     restoreState() {
         const savedState = localStorage.getItem('pomodoroState');
+        console.log('Attempting to restore state, saved state:', savedState);
+        
         if (savedState) {
             try {
                 const state = JSON.parse(savedState);
+                console.log('Parsed state:', state);
+                
+                // Always restore these basic properties
                 this.mode = state.mode || 'work';
-
-                // Ensure cycleCount doesn't exceed totalCycles from settings
                 this.cycleCount = Math.min(parseInt(state.cycleCount) || 1, this.settings.totalCycles);
-
-                // Load time from state or set based on mode
+                
+                // CRITICAL FIX: Always apply the saved timeLeft directly
                 if (state.timeLeft && parseInt(state.timeLeft) > 0) {
+                    // Apply saved timeLeft directly
                     this.timeLeft = parseInt(state.timeLeft);
-                    console.log('Restored timeLeft from state:', this.timeLeft);
+                    this.initialTimeLeft = parseInt(state.initialTimeLeft || state.timeLeft);
+                    this.startTime = parseInt(state.startTime || Date.now());
+                    
+                    // Force direct update of display using saved time string if available
+                    if (state.timeString && this.timerDisplay) {
+                        this.timerDisplay.textContent = state.timeString;
+                        console.log(`Direct display restoration using timeString: ${state.timeString}`);
+                    }
+                    // Fallback to using saved display minutes and seconds
+                    else if (state.displayMinutes !== undefined && state.displaySeconds !== undefined) {
+                        const displayMinutes = state.displayMinutes.toString().padStart(2, '0');
+                        const displaySeconds = state.displaySeconds.toString().padStart(2, '0');
+                        this.timerDisplay.textContent = `${displayMinutes}:${displaySeconds}`;
+                        console.log(`Direct display restoration: ${displayMinutes}:${displaySeconds}`);
+                    } else {
+                        // Otherwise update display normally
+                        this.updateDisplay();
+                    }
+                    
+                    console.log(`Directly restored timer state: mode=${this.mode}, timeLeft=${this.timeLeft}, running=${state.isRunning}`);
+                    
+                    // Auto-start if timer was running
+                    if (state.isRunning) {
+                        console.log('Auto-starting timer because it was running before');
+                        setTimeout(() => this.start(), 500);
+                    }
                 } else {
+                    console.log('No valid timeLeft in saved state, setting new time');
                     this.setTimeForCurrentMode();
-                    console.log('Setting new time for mode because no valid timeLeft in state');
+                    this.updateDisplay();
                 }
-
-                // If the timer was running, auto-start it
-                if (state.isRunning) {
-                    // We delay the start slightly to ensure UI is ready
-                    setTimeout(() => this.start(), 500);
-                }
-
-                this.updateDisplay();
             } catch (error) {
-                console.error('Error parsing saved state, resetting:', error);
+                console.error('Error restoring state:', error);
                 this.setTimeForCurrentMode();
                 this.updateDisplay();
             }
         } else {
-            // If no state, set time based on current mode
+            console.log('No saved state found, using default time for mode');
             this.setTimeForCurrentMode();
+            this.updateDisplay();
+        }
+    }
+    
+    // Helper method to handle completion when timer would have expired while page was closed
+    completeCycle() {
+        console.log('Completing cycle after page refresh');
+        
+        // Use completeTimer but don't auto-start
+        this.completeTimer();
+        this.pause();
+        
+        // Show notification that timer advanced
+        if (typeof Toast !== 'undefined') {
+            Toast.show('Timer advanced to next step while you were away', 'info');
         }
     }
 
@@ -604,6 +699,7 @@ class PomodoroTimer {
 
     skipStep() {
         this.completeTimer();
+        // Note: State is already saved in completeTimer
     }
 
     loadCompletedCycles() {
@@ -656,6 +752,17 @@ class PomodoroTimer {
             
             this.settingsDebug.textContent = JSON.stringify(debug, null, 2);
         }
+        
+        // Update the state debug element if it exists
+        if (this.stateDebug) {
+            try {
+                const savedState = localStorage.getItem('pomodoroState');
+                const state = savedState ? JSON.parse(savedState) : "No saved state";
+                this.stateDebug.textContent = JSON.stringify(state, null, 2);
+            } catch (error) {
+                this.stateDebug.textContent = "Error parsing state: " + error.message;
+            }
+        }
     }
 }
 
@@ -669,4 +776,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     console.log('Timer initialized with settings:', window.pomodoroTimer.settings);
+    
+    // Save state immediately after initialization and force update display
+    setTimeout(() => {
+        if (window.pomodoroTimer) {
+            // Force display update
+            window.pomodoroTimer.updateDisplay();
+            // Then save state with updated display
+            window.pomodoroTimer.saveState();
+            console.log('Initial timer state saved after DOM fully loaded');
+            window.pomodoroTimer.updateSettingsDebug();
+        }
+    }, 1000);
+    
+    // Save again after a bit longer to ensure everything is stable
+    setTimeout(() => {
+        if (window.pomodoroTimer) {
+            window.pomodoroTimer.saveState();
+            console.log('Final initialization state saved');
+        }
+    }, 2000);
 }); 
