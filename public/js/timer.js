@@ -56,6 +56,7 @@ class PomodoroTimer {
         this.startPauseBtn = document.getElementById('startPauseBtn');
         this.resetBtn = document.getElementById('resetBtn');
         this.skipBtn = document.getElementById('skipBtn');
+        this.resetFullBtn = document.getElementById('resetFullBtn');
         this.skipBtn.disabled = true;
         this.cycleDisplay = document.getElementById('cycleDisplay');
         this.stepWork = document.getElementById('stepWork');
@@ -193,6 +194,11 @@ class PomodoroTimer {
         this.startPauseBtn.addEventListener('click', () => this.toggleStartPause());
         this.resetBtn.addEventListener('click', () => this.reset());
         this.skipBtn.addEventListener('click', () => this.skipStep());
+        
+        // Add event listener for the reset full process button if it exists
+        if (this.resetFullBtn) {
+            this.resetFullBtn.addEventListener('click', () => this.resetFullProcess());
+        }
 
         // Lưu trạng thái khi người dùng rời trang
         window.addEventListener('beforeunload', () => this.saveState());
@@ -268,6 +274,22 @@ class PomodoroTimer {
         this.setTimeForCurrentMode();
         this.updateDisplay();
         this.skipBtn.disabled = true;
+    }
+
+    // Reset the entire timer process to the beginning (cycle 1, work mode)
+    resetFullProcess() {
+        this.pause();
+        this.mode = 'work';
+        this.cycleCount = 1;
+        this.setTimeForCurrentMode();
+        this.updateDisplay();
+        this.skipBtn.disabled = true;
+        
+        if (typeof Toast !== 'undefined') {
+            Toast.show('Timer reset to beginning', 'info');
+        }
+        
+        console.log('Full process reset: mode set to work, cycle set to 1');
     }
 
     completeTimer() {
