@@ -232,14 +232,21 @@ class PomodoroTimer {
             this.startPauseBtn.innerHTML = '<i class="fas fa-pause"></i><span>Pause</span>';
             this.skipBtn.disabled = false;
 
+            // Store the start timestamp and current timeLeft value
+            this.startTime = Date.now();
+            this.initialTimeLeft = this.timeLeft;
+
             this.timerId = setInterval(() => {
-                this.timeLeft--;
+                // Calculate elapsed time in seconds since timer started
+                const elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
+                // Calculate new timeLeft based on initial value and elapsed time
+                this.timeLeft = this.initialTimeLeft - elapsedSeconds;
                 this.updateDisplay();
 
                 if (this.timeLeft <= 0) {
                     this.completeTimer();
                 }
-            }, 1000);
+            }, 100); // Update more frequently for smoother display
         }
     }
 
@@ -251,6 +258,8 @@ class PomodoroTimer {
             this.startPauseBtn.innerHTML = '<i class="fas fa-play"></i><span>Start</span>';
             this.skipBtn.disabled = true;
             clearInterval(this.timerId);
+            // Store the actual timeLeft when paused
+            this.initialTimeLeft = this.timeLeft;
         }
     }
 
